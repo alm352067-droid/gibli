@@ -1,1 +1,128 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>جِبلي — تجربة الطلب</title>
+<style>
+body{margin:0;font-family:Tahoma,Arial;background:#f5f6f8;color:#171717}
+header{background:#111;color:#fff;padding:16px 6%;display:flex;justify-content:space-between}
+.logo{font-size:28px;font-weight:900}.logo b{color:#ffd43b}
+main{max-width:720px;margin:30px auto;padding:0 16px}.card{background:#fff;padding:24px;border-radius:18px;box-shadow:0 8px 25px #0001}
+h1{text-align:center}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.grid{grid-template-columns:1fr}}
+label{display:block;font-weight:bold;margin:12px 0 6px}input,select,textarea{width:100%;padding:13px;border:1px solid #ddd;border-radius:10px;font-size:15px;box-sizing:border-box}textarea{min-height:80px}
+button{width:100%;padding:14px;margin-top:18px;border:0;border-radius:11px;font-size:17px;font-weight:bold;cursor:pointer}
+.send{background:#ffd43b}.yes{background:#45c46b;color:#fff}.no{background:#eee}
+#priceBox,#success{display:none;margin-top:20px;padding:18px;border-radius:14px}
+#priceBox{background:#fff9dc}#success{background:#eaffea;border:1px solid #9bd69b}
+.price{font-size:25px;font-weight:900}.sub{color:#666;margin:7px 0}
+</style>
+</head>
+<body>
+<header><div class="logo">جِب<b>لي</b></div><div>🚴 التوصيل 20 جنيه</div></header>
+<main>
+<div class="card">
+<h1>إنت اطلب.. وإحنا نجيبهولك</h1>
+<form id="form">
+<div class="grid">
+<div><label>الاسم</label><input id="name" required></div>
+<div><label>رقم الموبايل</label><input id="phone" required></div>
+<div><label>البلد</label><select id="village" required><option value="">اختار</option><option>الحسانين</option><option>بهرمس</option></select></div>
+<div><label>نوع الطلب</label><select id="type" required><option value="">اختار</option><option>مطعم</option><option>سوبر ماركت</option><option>صيدلية</option><option>محل آخر</option></select></div>
+</div>
+<div id="rest" style="display:none"><label>اسم المطعم</label><input id="restaurant"></div>
+<label>تفاصيل الطلب</label><textarea id="items" required></textarea>
+<label>الشارع / المنطقة</label><input id="street" required>
+<label>أقرب علامة مميزة</label><input id="landmark" required>
+<button class="send" type="submit">إرسال الطلب</button>
+</form>
+
+<div id="priceBox">
+<div>💰 السعر المتوقع للمشتريات: <b id="itemsPrice"></b> جنيه</div>
+<div class="sub">🚴 رسوم التوصيل: 20 جنيه</div>
+<div class="price">الإجمالي: <span id="total"></span> جنيه</div>
+<p>هل موافق على السعر؟</p>
+<button class="yes" id="approve">موافق على السعر وإرسال الطلب</button>
+<button class="no" id="reject">غير موافق</button>
+</div>
+
+<div id="success">✅ تم إرسال طلبك بنجاح. سيتم التواصل معك لتأكيد الطلب.</div>
+</div>
+</main>
+
+<script>
+const form = document.getElementById('form'), type = document.getElementById('type');
+const rest = document.getElementById('rest'), restaurant = document.getElementById('restaurant');
+let pending = null;
+
+type.onchange = () => {
+    let x = type.value === 'مطعم';
+    rest.style.display = x ? 'block' : 'none';
+    restaurant.required = x;
+};
+
+form.onsubmit = e => {
+    e.preventDefault();
+    const demoPrice = Number(prompt('تجربة فقط: اكتب سعر المشتريات المتوقع بالجنيه', '100'));
+    if (!Number.isFinite(demoPrice) || demoPrice < 0) return;
+
+    pending = {
+        name: document.getElementById('name').value,
+        phone: document.getElementById('phone').value,
+        village: document.getElementById('village').value,
+        type: type.value,
+        restaurant: restaurant.value,
+        items: document.getElementById('items').value,
+        street: document.getElementById('street').value,
+        landmark: document.getElementById('landmark').value,
+        price: demoPrice,
+        total: demoPrice + 20
+    };
+
+    document.getElementById('itemsPrice').textContent = demoPrice;
+    document.getElementById('total').textContent = pending.total;
+    document.getElementById('priceBox').style.display = 'block';
+    document.getElementById('priceBox').scrollIntoView({ behavior: 'smooth' });
+};
+
+document.getElementById('approve').onclick = () => {
+    localStorage.setItem('lastGibliOrder', JSON.stringify(pending));
+
+    const myPhoneNumber = "201212842977";
+
+    let message = `🚴 *طلب جديد من جِبلي* 🚴\n\n`;
+    message += `👤 *الاسم:* ${pending.name}\n`;
+    message += `📞 *الموبايل:* ${pending.phone}\n`;
+    message += `📍 *القرية:* ${pending.village}\n`;
+    message += `🏠 *الشارع:* ${pending.street}\n`;
+    message += `🗺️ *علامة مميزة:* ${pending.landmark}\n`;
+    message += `──────────────────\n`;
+    message += `📦 *نوع الطلب:* ${pending.type}\n`;
+    if(pending.type === 'مطعم') {
+        message += `🏪 *المطعم:* ${pending.restaurant}\n`;
+    }
+    message += `📝 *التفاصيل:*\n${pending.items}\n`;
+    message += `──────────────────\n`;
+    message += `💵 *سعر المشتريات:* ${pending.price} جنيه\n`;
+    message += `🚴 *رسوم التوصيل:* 20 جنيه\n`;
+    message += `💰 *الإجمالي المطلوب:* ${pending.total} جنيه`;
+
+    const whatsappUrl = `https://wa.me/${myPhoneNumber}?text=${encodeURIComponent(message)}`;
+
+    form.style.display = 'none';
+    document.getElementById('priceBox').style.display = 'none';
+    document.getElementById('success').style.display = 'block';
+
+    window.open(whatsappUrl, '_blank');
+};
+
+document.getElementById('reject').onclick = () => {
+    document.getElementById('priceBox').style.display = 'none';
+    pending = null;
+    alert('تم إلغاء الطلب. يمكنك تعديل الطلب وإرساله مرة أخرى.');
+};
+</script>
+</body>
+</html>
 
